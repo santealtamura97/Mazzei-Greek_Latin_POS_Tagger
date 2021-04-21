@@ -47,6 +47,10 @@ def compute_oneshot_words_distributions(possible_tags, dev):
     distributions = []
     for key,count in dict(Counter(tags)).items():
         distributions.append((key,count/total_tags))
+    for tag in possible_tags:
+        if tag not in tags:
+            distributions.append((tag,0))
+    
     return distributions
     
         
@@ -65,14 +69,10 @@ def compute_emission_probabilities(train):
     count_tags = dict(Counter(tags_set))
     count_word = dict(Counter(words_set))
     
-    emission_p_set = []
+    emission_dict = dict()
     for key in count_word_tag:
-        emission_p_set.append((key[0],key[1],count_word_tag[key]/count_tags[key[1]]))
+        emission_dict[(key[0],key[1])] = count_word_tag[key]/count_tags[key[1]]
 
-    #convert into dictonary
-    emission_dict=dict()
-    for word,tag,prob in emission_p_set:
-        emission_dict[(word,tag)] = prob
     return emission_dict,count_word,count_word_tag
 
 #------------------------------------------------#

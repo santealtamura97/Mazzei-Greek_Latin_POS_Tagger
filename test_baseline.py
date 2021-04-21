@@ -50,6 +50,10 @@ for sentence in test:
     sentence_tokens = [token.form for token in sentence]
     tested_words_n = tested_words_n + len(pos_token_list)
     result_tags = baseline_algorithm(sentence_tokens, count_words_tag, possible_tags)
+    print("=============================")
+    print(result_tags)
+    print(pos_token_list)
+    print("=============================")
     for j in range(len(pos_token_list)):
         if pos_token_list[j] == result_tags[j]:
             checked_words = checked_words + 1        
