@@ -89,19 +89,14 @@ def compute_transition_probability(train,tag1,tag2):
                 count_t1 = count_t1 + 1
     return count_t1_before_t2/count_t1
 
-
-
 def tag_initial_state_probability(train, tag):
     count_initial_t = 0
-    count_t = 0
     for sentence in train:
         if sentence[0].upos == tag:
             count_initial_t = count_initial_t + 1
-        for token in sentence:
-            if token.upos == tag:
-                count_t = count_t + 1
                 
-    return count_initial_t/count_t
+    return count_initial_t/len(train)
+
 
 
 

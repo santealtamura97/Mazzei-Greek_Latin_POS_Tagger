@@ -1,4 +1,7 @@
-﻿## Pos Tagger per lingue morte: Latino e Greco
+﻿
+
+## Pos Tagger per lingue morte: Latino e Greco
+
 ###  0. Introduzione
 L'obiettivo dell'esercitazione è quello di implementare un Pos Tagger statistico per lingue morte (Latino e Greco) basato su **HMM** (Hidden Markov Model), il quale molto spesso viene utilizzato nella analisi delle sequenze.
 L'operazione di Pos Tagging consiste in:
@@ -75,10 +78,15 @@ Per la memorizzazione delle probabilità di transizione calcolate come descritto
 
 Le **matrici di transizione** cambiano in base al linguaggio utilizzato per il training perchè l'insieme dei Pos Tag relativi al train set del latino è diverso da quello relativo al greco antico. 
 
-Infatti avremo una lista di ***possible_tags***:
+Infatti avremo una lista di tag possibili (***possible_tags***):
 
-- Pos Tags Latino:  [*'ADJ','ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'NOUN', 'NUM', 'PART', 'PRON','PROPN','PUNCT', 'SCONJ', 'VERB','X'*]
-- Pos Tags Greco: [*'ADJ','ADP', 'ADV', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PART', 'PRON','SCONJ', 'VERB', 'X', 'PUNCT'*]
+- ```
+  Pos Tags Latino:  ['ADJ','ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'NOUN', 'NUM', 'PART', 'PRON','PROPN','PUNCT', 'SCONJ', 'VERB','X']
+  ```
+
+- ```
+  Pos Tags Greco: ['ADJ','ADP', 'ADV', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PART', 'PRON','SCONJ', 'VERB', 'X', 'PUNCT']
+  ```
 
 Di seguito l'algoritmo utilizzato per popolare la matrice di transizione che sfrutta la funzione vista in precedenza per calcolare le probabilità di transizione relative a due tag. Il calcolo viene effettuato per ogni coppia di tag presente nella lista ***possible_tags***:
 
@@ -103,7 +111,7 @@ In una struttura dati separata sono state memorizzate le probabilità di transiz
 
 Ad esempio, per il Latino:
 
-![initial_transirions](/home/santealtamura/Immagini/initial_transirions.png)
+![inital_p](/home/santealtamura/Immagini/inital_p.png)
 
 #### 1.4 Probabilità di emissione
 
@@ -247,7 +255,7 @@ Sono state utilizzate diverse strategie di **smoothing** per le parole sconosciu
 
   Come tutte le distribuzioni, quella calcolata associerà ad ogni tag una probabilità e la somma di tutte le probabilità sarà 1. Nell'algoritmo `compute_oneshot_words_distributions`, che calcola e restituisce la distribuzione,  verranno considerati anche i tag non associati a nessuna one shot word presente nel dev-set; a questi verrà assegnata probabilità 0. 
   
-  Ad esempio, la distribuzione di probabilità per i tag relativi alle one shot word del dev-set del Latino sarà:
+  Ad esempio, la distribuzione di probabilità per i tag relativi alle one shot word del dev-set del Latino sarà definita come una lista di coppie **(tag, probabilità)**:
   
   ```
   [('NOUN', 0.19340159271899887), ('PROPN', 0.38680318543799774), ('VERB', 0.229806598407281), ('ADJ', 0.080773606370876), ('CCONJ', 0.0011376564277588168), ('DET', 0.051194539249146756), ('NUM', 0.012514220705346985), ('ADP', 0.009101251422070534), ('ADV', 0.022753128555176336), ('PRON', 0.004550625711035267), ('AUX', 0.005688282138794084), ('SCONJ', 0.0011376564277588168), ('PART', 0.0011376564277588168), ('PUNCT', 0), ('X', 0)]
@@ -256,3 +264,122 @@ Sono state utilizzate diverse strategie di **smoothing** per le parole sconosciu
   E' possibile notare un'alta percentuale di nomi propri (PROPN).
 
 ### 4. Valutazione del Sistema e Analisi degli errori
+
+#### 4.1 Risultati per il Latino
+
+**Baseline**
+
+L'algoritmo di Baseline ottiene **ottimi** risultati con un accuratezza di quasi 96%. I vantaggi di questo algoritmo sono l'estrema semplicità e la velocità di esecuzione, infatti risulta essere quasi istantaneo. Gli errori sono principalmente relativi alla valutazione dei **nomi propri** e **verbi**. 
+
+```
+Pos Tag corretti:  23220
+Pos Tag sbagliati:  969
+Totale parole valutate:  24189
+Accuratezza:  95.99 %
+Conteggi errori:  {'PROPN': 351, 'VERB': 234, 'DET': 184, 'ADV': 85, 'NOUN': 7, 'SCONJ': 23, 'AUX': 6, 'CCONJ': 12, 'ADP': 14, 'ADJ': 20, 'NUM': 28, 'PRON': 5}
+Tempo di esecuzione:  0.08  sec
+```
+
+**Viterbi**
+
+L'algoritmo di Viterbi ottiene risultati leggermente migliori del Baseline per quanto riguarda tre strategie di smoothing, ma in tutti i casi il tempo di esecuzione risulta essere estremamente più lungo. Anche in questo caso gli errori più comuni sono i **nomi** **propri** e i **verbi**; questo accade perchè i nomi propri sono quelli che appaiono più raramente nel train set e molti di questi sono trattati come parole sconosciute; di conseguenza risulta essere determinante ''l'azzardo'' effettuato dalla strategia di smoothing utilizzata. 
+
+```
+Tipologia di smoothing:  UNKNOWN_NAME
+Pos Tag corretti:  23179
+Pos Tag sbagliati:  1010
+Totale parole valutate:  24189
+Accuratezza:  95.82 %
+Conteggi errori:  {'PROPN': 354, 'VERB': 191, 'DET': 161, 'ADV': 82, 'AUX': 66, 'PRON': 60, 'NOUN': 9, 'SCONJ': 23, 'CCONJ': 6, 'ADP': 17, 'ADJ': 15, 'NUM': 23, 'PUNCT': 2, 'X': 1}
+Tempo di esecuzione:  27.99  sec
+```
+
+```
+Tipologia di smoothing:  UNKNOWN_NAME_VERB
+Pos Tag corretti:  23221
+Pos Tag sbagliati:  968
+Totale parole valutate:  24189
+Accuratezza:  96.00 %
+Conteggi errori:  {'PROPN': 354, 'VERB': 142, 'DET': 161, 'ADV': 82, 'AUX': 66, 'NOUN': 24, 'PRON': 52, 'SCONJ': 23, 'CCONJ': 6, 'ADP': 17, 'ADJ': 15, 'NUM': 23, 'PUNCT': 2, 'X': 1}
+Tempo di esecuzione:  28.28  sec
+```
+
+```
+Tipologia di smoothing:  UNKNOWN_ALL
+Pos Tag corretti:  23244
+Pos Tag sbagliati:  945
+Totale parole valutate:  24189
+Accuratezza:  96.09 %
+Conteggi errori:  {'PROPN': 289, 'VERB': 182, 'DET': 161, 'ADV': 82, 'AUX': 67, 'NOUN': 26, 'PRON': 52, 'SCONJ': 23, 'CCONJ': 6, 'ADP': 16, 'ADJ': 15, 'NUM': 23, 'PUNCT': 2, 'X': 1}
+Tempo di esecuzione:  28.50  sec
+```
+
+```
+Tipologia di smoothing:  UNKNOWN_DISTRIBUTION_ONESHOT_WORDS
+Pos Tag corretti:  23307
+Pos Tag sbagliati:  882
+Totale parole valutate:  24189
+Accuratezza:  96.35 %
+Conteggi errori:  {'VERB': 152, 'DET': 161, 'ADV': 82, 'AUX': 67, 'PROPN': 255, 'NOUN': 26, 'PRON': 52, 'SCONJ': 23, 'CCONJ': 6, 'ADP': 17, 'ADJ': 15, 'NUM': 23, 'PUNCT': 2, 'X': 1}
+Tempo di esecuzione:  27.03  sec
+```
+
+#### 4.2 Risultati per il Greco
+
+**Baseline**
+
+Le performance per il Greco calano di molto. L'algoritmo di Baseline ha un'accuratezza del 73.5 % e gli errori più comuni riguardano i **verbi**, gli **avverbi** e i **nomi**.
+
+```
+Pos Tag corretti:  15411
+Pos Tag sbagliati:  5548
+Totale parole valutate:  20959
+Accuratezza:  73.53 %
+Conteggi errori:  {'VERB': 1978, 'ADV': 1823, 'PRON': 462, 'ADJ': 965, 'CCONJ': 133, 'DET': 88, 'SCONJ': 25, 'NOUN': 50, 'ADP': 16, 'NUM': 1, 'PUNCT': 3, 'INTJ': 3, 'X': 1}
+Tempo di esecuzione:  0.07  sec
+```
+
+**Viterbi**
+
+L'algoritmo di Viterbi, attraverso le strategie di smoothing, migliora le performance di molto che rimangono comunque molto basse. Infatti l'accuratezza oscilla tra il 72 e il 76%. Anche in questo caso la strategia di smoothing relativa alla distribuzione di probabilità delle parole che compaiono una sola volta nel dev-set risulta la migliore; 
+
+```
+Tipologia di smoothing:  UNKNOWN_NAME
+Pos Tag corretti:  15504
+Pos Tag sbagliati:  5455
+Totale parole valutate:  20959
+Accuratezza:  73.97 %
+Conteggi errori:  {'VERB': 1974, 'ADV': 1664, 'PRON': 476, 'ADJ': 969, 'CCONJ': 130, 'DET': 113, 'SCONJ': 51, 'NOUN': 48, 'ADP': 19, 'PUNCT': 6, 'NUM': 1, 'INTJ': 3, 'X': 1}
+Tempo di esecuzione:  23.13  sec
+```
+
+```
+Tipologia di smoothing:  UNKNOWN_NAME_VERB
+Pos Tag corretti:  15859
+Pos Tag sbagliati:  5100
+Totale parole valutate:  20959
+Accuratezza:  75.67 %
+Conteggi errori:  {'ADV': 1663, 'PRON': 459, 'VERB': 748, 'NOUN': 943, 'ADJ': 970, 'CCONJ': 130, 'DET': 113, 'SCONJ': 44, 'ADP': 19, 'PUNCT': 6, 'NUM': 1, 'INTJ': 3, 'X': 1}
+Tempo di esecuzione:  23.09  sec
+```
+
+```
+Tipologia di smoothing:  UNKNOWN_ALL
+Pos Tag corretti:  15158
+Pos Tag sbagliati:  5801
+Totale parole valutate:  20959
+Accuratezza:  72.32 %
+Conteggi errori:  {'VERB': 985, 'ADV': 1630, 'PRON': 442, 'NOUN': 1234, 'ADJ': 970, 'CCONJ': 131, 'DET': 132, 'PUNCT': 200, 'SCONJ': 53, 'ADP': 19, 'NUM': 1, 'INTJ': 3, 'X': 1}
+Tempo di esecuzione:  23.20  sec
+```
+
+```
+Tipologia di smoothing:  UNKNOWN_DISTRIBUTION_ONESHOT_WORDS
+Pos Tag corretti:  15928
+Pos Tag sbagliati:  5031
+Totale parole valutate:  20959
+Accuratezza:  76.00 %
+Conteggi errori:  {'ADV': 1663, 'PRON': 461, 'VERB': 586, 'NOUN': 1035, 'ADJ': 970, 'CCONJ': 130, 'DET': 113, 'SCONJ': 43, 'ADP': 19, 'PUNCT': 6, 'NUM': 1, 'INTJ': 3, 'X': 1}
+Tempo di esecuzione:  22.22  sec
+```
+

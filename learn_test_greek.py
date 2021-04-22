@@ -11,14 +11,16 @@ import pandas as pd
 import learning2 as learn2
 import viterbi as viterbi
 import time
+import enum
+from collections import Counter
 
-class Smoothing:
+class Smoothing(enum.Enum):
     UNKNOWN_NAME = 1
     UNKNOWN_NAME_VERB = 2
     UNKNOWN_ALL = 3
     UNKNOWN_DISTRIBUTION_ONESHOT_WORDS = 4
     
-class Language:
+class Language(enum.Enum):
     GREEK = 1
     LATIN = 2
 
@@ -28,15 +30,15 @@ start = ['START']
 pd.set_option('display.max_columns', None)
 
 smoothing_strategy = Smoothing.UNKNOWN_DISTRIBUTION_ONESHOT_WORDS
-language = Language.LATIN
+language = Language.GREEK
 
-if language == 1:
+if language.name == 'GREEK':
     train = pyconll.load_from_file('grc_perseus-ud-train.conllu')
     dev = pyconll.load_from_file('grc_perseus-ud-dev.conllu')
     test = pyconll.load_from_file('grc_perseus-ud-test.conllu')
     possible_tags = ['ADJ','ADP', 'ADV', 'CCONJ', 'DET', 'INTJ', 'NOUN',
                      'NUM', 'PART', 'PRON','SCONJ', 'VERB', 'X', 'PUNCT']
-else:
+elif language.name == 'LATIN':
     train = pyconll.load_from_file('la_llct-ud-train.conllu')
     dev = pyconll.load_from_file('la_llct-ud-test.conllu')
     test = pyconll.load_from_file('la_llct-ud-dev.conllu')
@@ -54,6 +56,7 @@ oneshot_words_tag_distribution = learn2.compute_oneshot_words_distributions(poss
 #testing
 checked_words = 0
 tested_words_n = 0
+error_list = []
 start = time.time()
 for sentence in test:
     pos_token_list = [token.upos for token in sentence]            
@@ -63,16 +66,22 @@ for sentence in test:
                                             emission_probabilities, initial_transition_probabilities,
                                             count_words, smoothing_strategy,
                                             oneshot_words_tag_distribution)
-    print("=============================")
-    print(result_tags)
-    print()
-    print(pos_token_list)
-    print("=============================")
     for j in range(len(pos_token_list)):
         if pos_token_list[j] == result_tags[j]:
             checked_words = checked_words + 1
+        else:
+            error_list.append(pos_token_list[j])
 end = time.time()
-print("Accuracy: ", checked_words/tested_words_n, "Time: ", end - start)
+
+print("Algoritmo: VITERBI")
+print("Linguaggio testato: ", language.name)
+print("Pos Tag corretti: ", checked_words)
+print("Pos Tag sbagliati: ", tested_words_n - checked_words)
+print("Totale parole valutate: ",tested_words_n)
+print("Tipologia di smoothing: ",smoothing_strategy.name)
+print("Accuratezza: ", format((checked_words/tested_words_n)*100,'.2f'),"%")
+print("Conteggi errori: ", dict(Counter(error_list)))
+print("Tempo di esecuzione: ", format(end - start,'.2f')," sec")
         
 
 

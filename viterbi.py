@@ -46,12 +46,12 @@ def get_prob(tag,oneshot_words_tag_distribution):
     
 def unknown_word_emission_p(smoothing_strategy,tag,possible_tags,oneshot_words_tag_distribution):
     emission_p = 0
-    if smoothing_strategy == 1:
+    if smoothing_strategy.name == 'UNKNOWN_NAME':
         if tag == 'NOUN': emission_p = 1
-    if smoothing_strategy == 2:
+    if smoothing_strategy.name == 'UNKNOWN_NAME_VERB':
         if tag == 'NOUN' or tag == 'VERB': emission_p = 0.5
-    if smoothing_strategy == 3: emission_p = 1/len(possible_tags)
-    if smoothing_strategy == 4: emission_p = get_prob(tag, oneshot_words_tag_distribution)
+    if smoothing_strategy.name == 'UNKNOWN_ALL': emission_p = 1/len(possible_tags)
+    if smoothing_strategy.name == 'UNKNOWN_DISTRIBUTION_ONESHOT_WORDS': emission_p = get_prob(tag, oneshot_words_tag_distribution)
                     
     return emission_p
 
