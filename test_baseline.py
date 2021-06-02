@@ -7,10 +7,11 @@ Created on Fri Apr  9 17:12:42 2021
 """
 
 import learning2 as learn
-import pyconll
 import time
 from collections import Counter
 import enum
+from conllu import parse_incr
+from io import open
 
 class Language(enum.Enum):
     GREEK = 1
@@ -19,13 +20,13 @@ class Language(enum.Enum):
 language = Language.GREEK
 
 if language.name == 'GREEK':
-    train = pyconll.load_from_file('grc_perseus-ud-train.conllu')
-    test = pyconll.load_from_file('grc_perseus-ud-test.conllu')
+    train = open("grc_perseus-ud-train.conllu", "r", encoding="utf-8")
+    test = open("grc_perseus-ud-test.conllu", "r", encoding="utf-8")
     possible_tags = ['ADJ','ADP', 'ADV', 'CCONJ', 'DET', 'INTJ', 'NOUN',
                  'NUM', 'PART', 'PRON','SCONJ', 'VERB', 'X', 'PUNCT']
 elif language.name == 'LATIN':
-    train = pyconll.load_from_file('la_llct-ud-train.conllu')
-    test = pyconll.load_from_file('la_llct-ud-dev.conllu')
+    train = open("la_llct-ud-train.conllu", "r", encoding="utf-8")
+    test = open("la_llct-ud-test.conllu", "r", encoding="utf-8")
     possible_tags = ['ADJ','ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'NOUN',
                      'NUM', 'PART', 'PRON','PROPN', 'PUNCT', 'SCONJ', 'VERB', 'X']
 
@@ -48,9 +49,9 @@ checked_words = 0
 tested_words_n = 0
 error_list = []
 start = time.time()
-for sentence in test:
-    pos_token_list = [token.upos for token in sentence]
-    sentence_tokens = [token.form for token in sentence]
+for sentence in parse_incr(test):
+    pos_token_list = [token["upos"] for token in sentence]
+    sentence_tokens = [token["form"] for token in sentence]
     tested_words_n = tested_words_n + len(pos_token_list)
     result_tags = baseline_algorithm(sentence_tokens, count_words_tag, possible_tags)
     for j in range(len(pos_token_list)):
@@ -59,6 +60,7 @@ for sentence in test:
         else:
             error_list.append(pos_token_list[j])
 end = time.time()
+test.close()
 
 print("Algoritmo: BASELINE")
 print("Linguaggio testato: ", language.name)

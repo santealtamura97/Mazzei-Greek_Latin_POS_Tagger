@@ -8,31 +8,59 @@ Created on Sun Mar 28 16:35:26 2021
 
 import numpy as np
 from collections import Counter
+from conllu import parse_incr
 
-#una_tantum -> serializzare
-def compute_trasition_matrix(possible_tags,train):
+
+def compute_transition_matrix(possible_tags, train):
     transition_matrix = np.zeros((len(possible_tags), len(possible_tags)), dtype='float32')
+    
+    transition_counter_dict = dict()
+    counter_dict = dict()
+    count_initial_dict = dict()
+    
+    for tag1 in possible_tags:
+        counter_dict[tag1] = 0
+        count_initial_dict[tag1] = 0
+        for tag2 in possible_tags:
+            transition_counter_dict[(tag1, tag2)] = 0
+    
+    sentence_n = 0
+    for sentence in parse_incr(train):
+        sentence_n += 1
+        for i in range(len(sentence)):
+            word_before = sentence[i-1]
+            word = sentence[i]
+            if i == 0:
+                if word["upos"] in count_initial_dict.keys():
+                    count_initial_dict[word["upos"]] = count_initial_dict[word["upos"]] + 1
+            if (word_before["upos"], word["upos"]) in transition_counter_dict.keys() and i != 0:
+                transition_counter_dict[(word_before["upos"], word["upos"])] = transition_counter_dict[(word_before["upos"], word["upos"])] + 1
+            if word["upos"] in counter_dict.keys():
+                counter_dict[word["upos"]] = counter_dict[word["upos"]] + 1
+            if i == len(sentence) - 1:
+                if (word["upos"], 'END') in transition_counter_dict.keys():
+                    transition_counter_dict[(word["upos"], 'END')] = transition_counter_dict[(word_before["upos"], word["upos"])] + 1
+    
+    #probabilità di transizione iniziali           
+    for i,t in enumerate(possible_tags):
+        transition_matrix[0][i] = count_initial_dict[t]/sentence_n
+    #probabilità di transizione intermedie
     for i,t1 in enumerate(possible_tags):
         for j,t2 in enumerate(possible_tags):
-            transition_matrix[i][j] =  compute_transition_probability(train,t1,t2)
+            if i >= 1 and j >= 1 and i < (len(possible_tags) - 1):
+                transition_matrix[i][j] =  transition_counter_dict[(t1,t2)]/counter_dict[t1]
+    
+    train.seek(0)
     return transition_matrix
-
-  
-#una_tantum -> serializzare
-def compute_initial_transition_probabilities(possible_tags, train):
-    initial_probabilities = np.zeros((1,len(possible_tags)), dtype='float32')
-    for i,t in enumerate(possible_tags):
-        initial_probabilities[0][i] = tag_initial_state_probability(train, t)
-    return initial_probabilities    
 
 #una_tantum -> serializzare
 def compute_oneshot_words_distributions(possible_tags, dev):
     word_tag_set = []
     word_set = []
-    for sentence in dev:
+    for sentence in parse_incr(dev):
         for token in sentence:
-            word_tag_set.append((token.form,token.upos))
-            word_set.append(token.form)
+            word_tag_set.append((token["form"],token["upos"]))
+            word_set.append(token["form"])
     word_tag = dict(word_tag_set)
     count_word = dict(Counter(word_set))
     one_shot_words_tag = []
@@ -59,11 +87,11 @@ def compute_emission_probabilities(train):
     word_tag_set = []
     tags_set = []
     words_set = []
-    for sentence in train:
+    for sentence in parse_incr(train):
         for token in sentence:
-            word_tag_set.append((token.form,token.upos))
-            tags_set.append(token.upos)
-            words_set.append(token.form)
+            word_tag_set.append((token["form"],token["upos"]))
+            tags_set.append(token["upos"])
+            words_set.append(token["form"])
             
     count_word_tag = dict(Counter(word_tag_set))
     count_tags = dict(Counter(tags_set))
@@ -76,28 +104,6 @@ def compute_emission_probabilities(train):
     return emission_dict,count_word,count_word_tag
 
 #------------------------------------------------#
-
-#t2_given_t1
-def compute_transition_probability(train,tag1,tag2):
-    count_t1_before_t2 = 0
-    count_t1 = 0
-    for sentence in train:
-        for i in range (len(sentence)):
-            if sentence[i-1].upos == tag1 and sentence[i].upos == tag2 and i != 0:
-                count_t1_before_t2 = count_t1_before_t2 + 1
-            if sentence[i].upos == tag1:
-                count_t1 = count_t1 + 1
-    return count_t1_before_t2/count_t1
-
-def tag_initial_state_probability(train, tag):
-    count_initial_t = 0
-    for sentence in train:
-        if sentence[0].upos == tag:
-            count_initial_t = count_initial_t + 1
-                
-    return count_initial_t/len(train)
-
-
 
 
 
