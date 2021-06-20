@@ -17,7 +17,7 @@ class Language(enum.Enum):
     GREEK = 1
     LATIN = 2
 
-language = Language.GREEK
+language = Language.LATIN
 
 if language.name == 'GREEK':
     train = open("grc_perseus-ud-train.conllu", "r", encoding="utf-8")

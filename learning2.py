@@ -51,6 +51,7 @@ def compute_transition_matrix(possible_tags, train):
                 transition_matrix[i][j] =  transition_counter_dict[(t1,t2)]/counter_dict[t1]
     
     train.seek(0)
+    
     return transition_matrix
 
 #una_tantum -> serializzare
